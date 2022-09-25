@@ -36,7 +36,19 @@ module.exports = {
       warnings: false,
       errors: true
     },
-    before: require('./mock/mock-server.js')
+    // 跨域, 请求代理
+    proxy: {
+      // 当我们的本地的请求 有/api的时候，就会代理我们的请求地址向另外一个服务器发出请求
+      // 这里的api 表示如果我们的请求地址有/api的时候,就出触发代理机制
+      '/api': {
+        target: 'https://likede2-java.itheima.net/', // 跨域请求的地址,我们要代理的地址
+        changeOrigin: true // 只有这个值为true的情况下 才表示开启跨域
+        // pathRewrite: { '^/api': '' }
+        // 重定向:如果接口的url没有固定统一的前缀,就需要重定向,定向为空,以防自己加上多余的/api前缀
+      }
+    }
+
+    // before: require('./mock/mock-server.js')
   },
   configureWebpack: {
     // provide the app's title in webpack's name field, so that

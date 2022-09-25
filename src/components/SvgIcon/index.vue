@@ -26,7 +26,7 @@ export default {
       return isExternal(this.iconClass)
     },
     iconName() {
-      return `#icon-${this.iconClass}`
+      return `#icon-${this.iconClass}` // 拼接成 icons文件夹index.vue模块里的id
     },
     svgClass() {
       if (this.className) {
