@@ -37,7 +37,7 @@
         </el-form-item>
 
         <!-- 验证码input框 -->
-        <el-form-item prop="code">
+        <el-form-item prop="identifyCode">
           <el-row :span="24" style="display:flex">
             <el-col :span="13" :offset="0" style="flex:3">
               <span
@@ -45,17 +45,17 @@
                 style="font-size:16px;"
               />
               <el-input
-                v-model="loginForm.code"
-                class="verify_css"
+                v-model="loginForm.identifyCode"
                 auto-complete="off"
                 placeholder="请输入验证码"
               />
             </el-col>
 
-            <el-col :soan="11" :offset="0" style="flex:1">
-              <div class="login-code" width="100%" @click="refreshCode">
+            <el-col :span="11" :offset="0" style="flex:1">
+              <div class="login-code" @click="refreshCode">
                 <!-- 验证码组件 -->
-                <s-identify :identify-code="identifyCode" />
+                <img :src="codeSrc" alt="" style="width:130px;height:48px;background-color:blue">
+                <!-- <s-identify :identify-code="identifyCode" /> -->
               </div>
             </el-col>
           </el-row>
@@ -83,10 +83,11 @@
 import { validMobile } from '@/utils/validate'
 // import { GVerify } from './js/verifyCode'
 // import LoginVerify from './components/LoginVerify.vue'
-import SIdentify from './components/SIdentify.vue'
+// import SIdentify from './components/SIdentify.vue'
+import { identifyCodeAPI } from '@/api/login'
 export default {
   name: 'Login',
-  components: { SIdentify },
+  // components: { SIdentify },
   data() {
     const phoneValid = (rule, value, callback) => {
       if (!validMobile(value)) { // utiles文件夹里封装的validMobile函数
@@ -103,10 +104,10 @@ export default {
       loginForm: { // 表单提交内容
         loginName: 'admin', // 后端格式是这样
         password: 'admin',
-        code: null
+        identifyCode: null
       },
       identifyCodes: '1234567890abcdefjhijklinopqrsduvwxyz', // 随机串内容
-      identifyCode: '', // 用户输入的验证码(用于校验)
+      // identifyCode: '', // 用户输入的验证码(用于校验)
       rules: { // 规则是对象,每一条规则是一个数组
         loginName: [
           { required: true, message: '账号必填', trigger: 'blur' },
@@ -118,17 +119,19 @@ export default {
           { required: true, message: '密码必填', trigger: 'blur' },
           { min: 5, max: 10, message: '密码格式不正确', trigger: 'blur' }
         ],
-        code: [
+        identifyCode: [
           { required: true, message: '验证码不能为空', trigger: 'blur' }
         ]
       },
-      loading: false
+      loading: false,
+      codeSrc: ''
     }
   },
-  mounted() {
+  created() {
   // 初始化验证码,挂载时就默认四位字母数字
     this.identifyCode = ''
     this.makeCode(this.identifyCodes, 4)
+    this.refreshCode()
   },
 
   methods: {
@@ -142,6 +145,7 @@ export default {
     async login() {
       try {
         // 如果用户输入的验证码 不等于 验证码的随机数
+        console.log(this.loginForm.code, this.identifyCode)
         if (this.loginForm.code.toLowerCase() !== this.identifyCode.toLowerCase()) {
           this.$message.error('验证码输入错误')
           this.refreshCode() // 重置验证码
@@ -152,16 +156,21 @@ export default {
         this.loading = true
         // 发送请求  token比较重要,全局,存储在vuex中
         await this.$store.dispatch('user/loginAction', this.loginForm) // 用户输入的账号密码提交给后端
-        await this.$store.dispatch('user/identifyCode', this.identifyCode)
+        // await this.$store.dispatch('user/identifyCode', this.codeSrc)
       } finally {
         this.loading = false // 把加载中,属性复原
       }
     },
 
     // 重置验证码
-    refreshCode() {
-      this.identifyCode = ''
-      this.makeCode(this.identifyCodes, 4) // 制作验证码,在identifyCodes字符串中选四位
+    async refreshCode() {
+      const data = await identifyCodeAPI(this.identifyCode)
+      console.log(data)
+      // commit('SET_CLIENT_TOKEN', data.request.responseURL)
+      this.codeSrc = data.request.responseURL
+
+      // this.identifyCode = ''
+      // this.makeCode(this.identifyCodes, 4) // 制作验证码,在identifyCodes字符串中选四位
     },
 
     // 制作验证码的四位字母数字
@@ -227,6 +236,10 @@ $cursor: #889aa4;
   display: flex;
   align-content: center;
   justify-content: center;
+}
+
+.el-row{
+  height: 48px;
 }
   .el-form-item {
     border: 1px solid #e2e2e2;
